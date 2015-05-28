@@ -9,6 +9,7 @@ from rezgui.widgets.ChangelogEdit import VariantChangelogEdit
 from rezgui.widgets.VariantDetailsWidget import VariantDetailsWidget
 
 from rezgui.widgets.VariantsList import VariantsList
+from rezgui.widgets.PluginsList import PluginsList
 from rez.packages_ import Package, Variant
 
 
@@ -22,6 +23,7 @@ class PackageTabWidget(QtGui.QTabWidget, ContextViewMixin):
         self.summary_widget = VariantSummaryWidget()
         self.tools_widget = VariantToolsList(self.context_model)
         self.variants_widget = VariantsList()
+        self.plugins_widget = PluginsList()
         self.changelog_edit = VariantChangelogEdit()
         self.details_widget = VariantDetailsWidget(self.context_model)
         self.help_widget = VariantHelpWidget(self.context_model)
@@ -46,6 +48,11 @@ class PackageTabWidget(QtGui.QTabWidget, ContextViewMixin):
         icon = get_icon("variant", as_qicon=True)
         self.addTab(self.variants_widget, icon, "variants")
         self.tabs["variants"] = dict(index=n, lazy=False)
+        n += 1
+
+        icon = get_icon("variant", as_qicon=True)
+        self.addTab(self.plugins_widget, icon, "plugins")
+        self.tabs["plugins"] = dict(index=n, lazy=True)
         n += 1
 
         icon = get_icon("tools", as_qicon=True)
@@ -96,6 +103,16 @@ class PackageTabWidget(QtGui.QTabWidget, ContextViewMixin):
             self.setTabEnabled(tab_index, True)
         else:
             label = "variants"
+            self.setTabEnabled(tab_index, False)
+            disabled_tabs.add(tab_index)
+        self.setTabText(tab_index, label)
+
+        tab_index = self.tabs["plugins"]["index"]
+        label = "plugins"
+        if variant and variant.has_plugins:
+            # label = "plugins (%s)" % str(len(self.widget(tab_index).plugins) or '*')
+            self.setTabEnabled(tab_index, True)
+        else:
             self.setTabEnabled(tab_index, False)
             disabled_tabs.add(tab_index)
         self.setTabText(tab_index, label)

@@ -30,4 +30,4 @@ cmake = {
 
 if os.name != "posix":
     cmake["build_system"] = "nmake"
-    cmake["make_binary"] = "nmake"
+    cmake["make_binary"] = "nmake.win.bat"

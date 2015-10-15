@@ -66,6 +66,7 @@ scripts = [
     "rez-gui"
 ]
 
+if os.name == "nt":scripts.extend(["%s.bat" % s for s in scripts])
 
 setup(
     name="rez",

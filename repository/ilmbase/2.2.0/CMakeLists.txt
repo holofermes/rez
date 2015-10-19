@@ -11,22 +11,33 @@ rez_set_archive(
     url_ilmbase ilmbase/ilmbase-${ilmbase_version}.tar.gz
     http://download.savannah.nongnu.org/releases/openexr/ilmbase-${ilmbase_version}.tar.gz
 )
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+    set(make_args -j$ENV{REZ_BUILD_THREAD_COUNT} VERBOSE=1)
 
-set(make_args -j$ENV{REZ_BUILD_THREAD_COUNT} VERBOSE=1)
+    if(${REZ_BUILD_INSTALL})
+        set(install_cmd make install ${make_args})
+    else()
+        set(install_cmd "")
+    endif()
 
-if(${REZ_BUILD_INSTALL})
-    set(install_cmd make install ${make_args})
-else()
-    set(install_cmd "")
+    ExternalProject_add(
+        ilmbase
+        URL ${url_ilmbase}
+        PREFIX ilmbase
+        UPDATE_COMMAND ""
+        CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --with-pic --disable-debug --enable-shared=no
+        INSTALL_COMMAND "${install_cmd}"
+        BUILD_IN_SOURCE 1
+        BUILD_COMMAND make ${make_args}
+    )
+
+elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+
+    ExternalProject_add(
+        ilmbase
+        URL ${url_ilmbase}
+        PREFIX ilmbase
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        BUILD_IN_SOURCE 1
+    )
 endif()
-
-ExternalProject_add(
-    ilmbase
-    URL ${url_ilmbase}
-    PREFIX ilmbase
-    UPDATE_COMMAND ""
-    CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --with-pic --disable-debug --enable-shared=no
-    INSTALL_COMMAND "${install_cmd}"
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND make ${make_args}
-)

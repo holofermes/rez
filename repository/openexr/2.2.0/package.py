@@ -15,12 +15,12 @@ requires = [
     "ilmbase-2.2"
 ]
 
-build_requires = [
-    "gcc-4.8.2"
-]
+import os
+build_requires = [ "%s" % "msvc-12.0" if os.name == "nt" else "gcc-4.8.2" ]
 
 variants = [
-    ["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]
+    ["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"],
+    ["platform-windows", "arch-AMD64", "os-windows-6.2.9200"]
 ]
 
 tools = [

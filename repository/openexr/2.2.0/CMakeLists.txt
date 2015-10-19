@@ -20,13 +20,23 @@ else()
     set(install_cmd "")
 endif()
 
-ExternalProject_add(
-    openexr
-    URL ${url_openexr}
-    PREFIX openexr
-    UPDATE_COMMAND ""
-    CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --with-pic --disable-ilmbasetest --with-ilmbase-prefix=$ENV{REZ_ILMBASE_ROOT}
-    INSTALL_COMMAND "${install_cmd}"
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND make ${make_args}
-)
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+    ExternalProject_add(
+        openexr
+        URL ${url_openexr}
+        PREFIX openexr
+        UPDATE_COMMAND ""
+        CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --with-pic --disable-ilmbasetest --with-ilmbase-prefix=$ENV{REZ_ILMBASE_ROOT}
+        INSTALL_COMMAND "${install_cmd}"
+        BUILD_IN_SOURCE 1
+        BUILD_COMMAND make ${make_args}
+    )
+elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+    ExternalProject_add(
+        openexr
+        URL ${url_openexr}
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        PREFIX openexr
+    )
+
+endif()

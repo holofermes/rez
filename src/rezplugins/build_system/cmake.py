@@ -42,7 +42,6 @@ class CMakeBuildSystem(BuildSystem):
                      'codeblocks':  "CodeBlocks - Unix Makefiles",
                      'make':        "Unix Makefiles",
                      'nmake':       "NMake Makefiles",
-                     'msvc-12':     "Visual Studio 12 2013 Win64",
                      'xcode':       "Xcode"}
 
     build_targets = ["Debug", "Release", "RelWithDebInfo"]
@@ -134,9 +133,6 @@ class CMakeBuildSystem(BuildSystem):
             cmd.append("-DCENTRAL=1")
 
         # execute cmake within the build env
-        cmd_win = ["cmake.win.bat"]
-        cmd_win.extend(cmd)
-        cmd = cmd_win
         _pr("Executing: %s" % ' '.join(cmd))
         if not os.path.abspath(build_path):
             build_path = os.path.join(self.working_dir, build_path)
@@ -179,10 +175,12 @@ class CMakeBuildSystem(BuildSystem):
             cmd = ["make"]
         cmd += (self.child_build_args or [])
 
-        # nmake doesn't take -j as arg :p
-        # if not any(x.startswith("-j") for x in (self.child_build_args or [])):
-        #     n = variant.config.build_thread_count or cpu_count()
-        #     cmd.append("-j%d" % n)
+        # nmake has no -j
+        # 
+        if platform_.name != 'windows':
+            if not any(x.startswith("-j") for x in (self.child_build_args or [])):
+                n = variant.config.build_thread_count or cpu_count()
+                cmd.append("-j%d" % n)
 
         # execute make within the build env
         _pr("\nExecuting: %s" % ' '.join(cmd))

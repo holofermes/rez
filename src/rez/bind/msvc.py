@@ -94,7 +94,7 @@ def enumerate_msvc(is_win64):
         return result
 
 setupmsvc = """
-call "{msvc_root}\\vcvarsall.bat" {arch_argument}
+call "{msvc_root}\\vcvarsall.bat" %1
 set
 """
 
@@ -103,8 +103,9 @@ def commands():
     import os
 
     env.PATH.append('{this.root}/bin')
-
-    cmd="%s\\bin\\setupmsvc.bat" % this.root
+    arch_argument = "x86_amd64" if env.REZ_TARGET_VERSION == "AMD64" else "x86"
+    
+    cmd="%s\\bin\\setupmsvc.bat %s" % (this.root, arch_argument)
     p = subprocess.Popen(cmd, shell=True, 
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
@@ -157,21 +158,26 @@ def bind(path, version_range=None, opts=None, parser=None):
                 version = os.path.split(_msvc_root)[-2].split()[-1]
                 msvcs[version] = _msvc_root
 
-    arch_argument = "x86_amd64" if is_win64 else "x86"
-    for version, msvc_root in msvcs.iteritems():
-        check_version(version, version_range)
+    # arch_argument = "x86_amd64" if is_win64 else "x86"
+    # variants = [system.variant]
+    variants = [['platform-windows', 'arch-AMD64', 'os-windows-6.2.9200', 'target-AMD64'],
+        ['platform-windows', 'arch-AMD64', 'os-windows-6.2.9200', 'target-AMD32']]
+    for variant_ in variants:
+        for version, msvc_root in msvcs.iteritems():
+            check_version(version, version_range)
 
-        def make_root(variant, root):
-            binpath = make_dirs(root, "bin")
-            bat = os.path.join(binpath, "setupmsvc.bat")
-            with open(bat, "w") as f:
-                f.write(setupmsvc.format(msvc_root=msvc_root,
-                                         arch_argument=arch_argument))
+            def make_root(variant, root):
+                binpath = make_dirs(root, "bin")
+                bat = os.path.join(binpath, "setupmsvc.bat")
+                with open(bat, "w") as f:
+                    f.write(setupmsvc.format(msvc_root=msvc_root))#,
+                                             #arch_argument=arch_argument))
 
-        with make_package("msvc", path, make_root=make_root) as pkg:
-            pkg.version = version
-            pkg.tools = ["setupmsvc"]
-            pkg.commands = commands
-            pkg.variants = [system.variant]
+            with make_package("msvc", path, make_root=make_root) as pkg:
+                pkg.version = version
+                pkg.tools = ["setupmsvc"]
+                pkg.commands = commands
+                # pkg.variants = [system.variant]
+                pkg.variants = [variant_]
 
     return "msvc", msvcs.keys()

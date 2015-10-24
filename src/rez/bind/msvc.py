@@ -129,6 +129,8 @@ def commands():
 def setup_parser(parser):
     parser.add_argument("--version", type=str, metavar="VERSION",
                         help="manually specify the msvc version to install.")
+    parser.add_argument("--root", type=str, metavar="ROOT",
+                        help="the root of msvc where to find vcvarsall.bat.")
 
 def bind(path, version_range=None, opts=None, parser=None):
     is_win64 = False
@@ -138,10 +140,26 @@ def bind(path, version_range=None, opts=None, parser=None):
         is_win64 = True
     if os.environ.get('ProgramW6432'):
         is_win64 = True
+
     msvcs = enumerate_msvc(is_win64)
+    if not msvcs:
+        version = getattr(opts, "version", None)
+        if not version:
+            _msvc_root = getattr(opts, "root", None) 
+            if not _msvc_root:
+                print "can't find msvc root, use --msvc-root and pass the directory to find vcvarsall.bat"
+                exit(1)
+            else:
+                vcvarsall = os.path.join(_msvc_root, "vcvarsall.bat")
+                if not os.path.isfile(vcvarsall):
+                    print "can't find:", vcvarsall
+                    exit(1)
+                version = os.path.split(_msvc_root)[-2].split()[-1]
+                msvcs[version] = _msvc_root
+
     arch_argument = "x86_amd64" if is_win64 else "x86"
     for version, msvc_root in msvcs.iteritems():
-        check_version(version, getattr(opts, "version", version_range))
+        check_version(version, version_range)
 
         def make_root(variant, root):
             binpath = make_dirs(root, "bin")

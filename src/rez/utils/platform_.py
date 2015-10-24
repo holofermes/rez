@@ -321,6 +321,11 @@ class WindowsPlatform(Platform):
     def _terminal_emulator_command(self):
         return "CMD.exe /Q /K"
 
+    def _difftool(self):
+        from rez.util import which
+        return which("kdiff3", "meld", "diff")
+
+
 
 # singleton
 platform_ = None

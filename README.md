@@ -169,3 +169,34 @@ like any other package:
 * Has a memcached-based caching system, for caching environment resolves;
 * Has a package filtering feature, allowing for staged package releases such as
   alpha and beta packages.
+
+
+
+
+## Notes for windows
+
+If you install from source with:
+
+]$ python setup.py install
+
+you won't be able to issue any of the command tools (rez, rez-env etc..) because all the scripts will be installed without an extension.
+Instead, you should perform a 'production' install using `install.py` which will compile the scripts into executable files - for reference https://matthew-brett.github.io/pydagogue/installing_scripts.html
+
+
+
+This fork also provides an `msvc`, and a `target` package as bind plugins.
+
+The `target` package is used to determine which architecture the cl.exe command will output 64, or 32 bit. The versions of this package are essentially the same as the `arch` package.
+This is done by passing the appropriate argument vcvarsall.bat - fore reference https://msdn.microsoft.com/en-us/library/f2ccy3wt.aspx#Anchor_1
+
+If you are using a 32 bit version of python then you can:
+
+    ]$ rez-bind target
+    ]$ rez-bind msvc
+
+This will install all msvc versions available in your system, but if you are using a 64 bit version, then you will have to provide the directory where the `vcvarsall.bat` lives for every version of Visual Studio you that you want to bind.
+
+    ]$ rez-bind msvc --root "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC"
+
+
+If you want to use the git-bash shell, make sure to prepend all the rez commands with `winpty` for best shell compatibility, or even better create an alias.

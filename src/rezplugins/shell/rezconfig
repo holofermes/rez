@@ -12,3 +12,6 @@ tcsh:
 
 cmd:
     prompt: '$G'
+
+winbash:
+    prompt: ''

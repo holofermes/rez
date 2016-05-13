@@ -256,7 +256,6 @@ class UnixShell(Shell):
                                add_default_namespaces=False)
 
         executor = _create_ex()
-
         if self.settings.prompt:
             newprompt = '${REZ_ENV_PROMPT}%s' % self.settings.prompt
             executor.interpreter._saferefenv('REZ_ENV_PROMPT')
@@ -268,13 +267,13 @@ class UnixShell(Shell):
         else:
             if d["stdin"]:
                 assert(self.stdin_arg)
-                shell_command = "%s %s" % (self.executable, self.stdin_arg)
+                shell_command = "%s %s" % (pipes.quote(self.executable), self.stdin_arg)
                 quiet = True
             elif do_rcfile:
                 assert(self.rcfile_arg)
-                shell_command = "%s %s" % (self.executable, self.rcfile_arg)
+                shell_command = "%s %s" % (pipes.quote(self.executable), self.rcfile_arg)
             else:
-                shell_command = self.executable
+                shell_command = pipes.quote(self.executable)
 
             if do_rcfile:
                 # hijack rcfile to insert our own script

@@ -75,7 +75,12 @@ class System(object):
             raise RezSystemError("no shells available")
 
         if self.platform == "windows":
-            return "cmd"
+            shell = os.getenv("SHELL", "cmd")
+            if shell.endswith("bash"):
+                shell = "winbash"
+            else:
+                shell = "cmd"
+            return shell
         else:
             import subprocess as sp
             shell = None

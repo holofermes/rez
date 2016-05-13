@@ -184,6 +184,7 @@ class ActionManager(object):
 
         self._env_sep_map = env_sep_map if env_sep_map is not None \
             else config.env_var_separators
+        self._env_sep_map.update(self.interpreter.env_var_separators)
 
     def get_action_methods(self):
         """
@@ -421,6 +422,10 @@ class ActionInterpreter(object):
     variables which reference other variables (e.g. "this-${THAT}").
     """
     expand_env_vars = False
+
+    @property
+    def env_var_separators(self):
+        return {}
 
     def get_output(self, style=OutputStyle.file):
         """Returns any implementation specific data.
@@ -1074,7 +1079,7 @@ class RexExecutor(object):
             else create_shell()
 
         paths = sh.get_syspaths()
-        paths_str = os.pathsep.join(paths)
+        paths_str = self.manager._env_sep("PATH").join(paths)
         self.env.PATH.append(paths_str)
 
     def prepend_rez_path(self):

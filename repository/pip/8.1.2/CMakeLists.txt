@@ -12,10 +12,11 @@ if(NOT ${REZ_BUILD_INSTALL})
 endif()
 
 rez_set_archive(
-    url setuptools/setuptools-${version}.tar.gz
-    https://pypi.python.org/packages/source/s/setuptools/setuptools-${version}.tar.gz
+    url pip/pip-${version}.tar.gz
+    https://github.com/pypa/pip/archive/8.1.2.tar.gz
 )
-set(src_path ${CMAKE_BINARY_DIR}/setuptools/src/setuptools)
+
+set(src_path ${CMAKE_BINARY_DIR}/pip/src/pip)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(install_cmd bash ${CMAKE_SOURCE_DIR}/install.sh ${src_path} ${CMAKE_INSTALL_PREFIX})
@@ -24,9 +25,9 @@ elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
 endif()
 
 ExternalProject_add(
-    setuptools
+    pip
     URL ${url}
-    PREFIX setuptools
+    PREFIX pip
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1

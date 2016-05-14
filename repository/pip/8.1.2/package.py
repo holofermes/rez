@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
+name = 'pip'
 
-name = 'setuptools'
-
-version = '18.5'
+version = '8.1.2'
 
 tools = [
-    'easy_install'
+    'pip',
 ]
+
 import os
 build_requires = [ "%s" % "msvc-14.0" if os.name == "nt" else "gcc-4.8.2" ]
 

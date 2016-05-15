@@ -14,4 +14,4 @@ cmd:
     prompt: '$G'
 
 winbash:
-    prompt: ''
+    prompt: '>'

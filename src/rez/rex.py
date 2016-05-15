@@ -184,7 +184,8 @@ class ActionManager(object):
 
         self._env_sep_map = env_sep_map if env_sep_map is not None \
             else config.env_var_separators
-        self._env_sep_map.update(self.interpreter.env_var_separators)
+        if hasattr(interpreter, "env_var_separators"):
+            self._env_sep_map.update(interpreter.env_var_separators)
 
     def get_action_methods(self):
         """

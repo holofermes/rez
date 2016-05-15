@@ -117,7 +117,8 @@ def commands():
             value = kv[1]
             values = value.split(os.pathsep)
             if len(values) == 1 or key not in os.environ:
-                setenv(key, value)
+                if key.find('(') == -1 and key.find(')') == -1:
+                    setenv(key, value)
             else:
                 osv = os.environ.get(key).split(os.pathsep)
                 for v in values:

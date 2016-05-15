@@ -25,6 +25,11 @@ class CMD(Shell):
             cls._executable = Shell.find_executable('cmd')
         return cls._executable
 
+    @property
+    def env_var_separators(self):
+        priont
+        return {"PATH":";"}
+
     @classmethod
     def name(cls):
         return 'cmd'

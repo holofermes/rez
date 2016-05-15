@@ -7,6 +7,9 @@ description = "A C++ executable that links to a library that is part of this " \
 
 requires = ['translate_lib-2.2']
 
+import os
+build_requires = [ "%s" % "msvc" if os.name == "nt" else "gcc" ]
+
 tools = ['test_ghetto']
 
 def commands():

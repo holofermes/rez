@@ -27,7 +27,7 @@ class TestBuild(TestBase, TempdirMixin):
         shutil.copytree(packages_path, cls.src_root)
 
         cls.settings = dict(
-            packages_path=[cls.install_root],
+            packages_path=[cls.install_root, "~/packages"],
             package_filter=None,
             resolve_caching=False,
             warn_untimestamped=False,

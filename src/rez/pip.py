@@ -15,6 +15,12 @@ import shutil
 import sys
 import os
 
+from rez.utils.platform_ import platform_
+from rez.package_maker__ import make_package
+from rez.bind._utils import make_dirs
+from rez.system import system
+import re
+
 
 class InstallMode(Enum):
     # don't install dependencies. Build may fail, for example the package may
@@ -117,26 +123,18 @@ def pip_install_package(source_name, pip_version=None, python_versions=None,
 
     # iterate over archives and build/install each, starting from those with no
     # dependencies and moving up until we install the target package last
+    req = []
+    last_archive = archives.pop()
     for archive in archives:
-        _install_from_archive(archive=archive, context=context, pip_req=pip_req, py_reqs=py_reqs,
+        req.append(_install_from_archive(archive=archive, context=context, pip_req=pip_req, py_reqs=py_reqs,
+                              mode=mode))
+    
+    # install the last archive with its new dependencies
+    # 
+    _install_from_archive(archive=last_archive, context=context, pip_req=pip_req, py_reqs=py_reqs+req,
                               mode=mode)
-
     # cleanup
     shutil.rmtree(tmpdir)
-
-# from __future__ import absolute_import
-from rez.package_maker__ import make_package
-from rez.vendor.version.version import Version
-from rez.bind._utils import check_version
-from rez.system import system
-
-# # Version("Jinja2-2.8-py2.py3-none-any.whl")
-# def bind(path, version_range=None, opts=None, parser=None):
-
-
-
-# variants = [["platform-windows"]]
-# ["platform-linux", "arch-x86_64", "os-Ubuntu-12.04", "python-2.7"],
 
 
 def commands():
@@ -145,61 +143,74 @@ def commands():
     env.PATH.append("{root}/%s" % bin_name)
     env.PYTHONPATH.append("{root}/python")
 
-#     return ("arch", version)
-from rez.config import config
+
+wheel_file_re = re.compile(
+    r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
+    ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
+    \.whl|\.dist-info)$""",
+    re.VERBOSE
+)
+
+def wheel_version(filename):
+    """
+    Taken from pip very own Wheel class
+    """
+    wheel_info = wheel_file_re.match(filename)
+    if not wheel_info:
+        raise RuntimeError(
+            "%s is not a valid wheel filename." % filename
+        )
+    name = wheel_info.group('name').replace('_', '-')
+    # we'll assume "_" means "-" due to wheel naming scheme
+    # (https://github.com/pypa/pip/issues/1150)
+    version = wheel_info.group('ver').replace('_', '-')
+    return name, version
+
+
 def _install_from_archive(archive, context, pip_req, py_reqs, mode):
-    pkg = os.path.basename(archive)
-    version = Version(pkg)
-    print version.tokens
-    print version.tokens
-    print version.tokens
-    print version.tokens
-    print version.tokens
-    print version.tokens
-    print version.tokens
-    print version.tokens
-    print version.tokens
-    print version.tokens
-    print version.tokens
-    agkdvn
-    # check_version(version, version_range)
-    pkg_name = str(version.tokens[0])
-    pkg_version = str(version.tokens[1])
+    filename = os.path.basename(archive)
+    filebase, ext = os.path.splitext(filename)
+
+    if ext in ('.bz2', '.gz'):
+        filebase, ext2 = os.path.splitext(filebase)
+
+    if ext == ".whl":
+        pkg_name, pkg_version = wheel_version(filename)
+    else:
+        pkg_name = filebase.split('-')[0]
+        pkg_version = Version("".join(filebase.split('-')[1:]))
+
+    pkg_str = "%s-%s" % (pkg_name, pkg_version)
+
     install_path = config.local_packages_path
 
     def make_root(variant, root):
-        # copy source
-        stagingpath = "C:\\rez\\tmp\\staging"
-        destpath = os.path.join(stagingpath, "python")
-        destbinpath = os.path.join(stagingpath, "bin")
+        # build in place
+        # 
+        destpath = os.path.join(root, "python")
+        destbinpath = os.path.join(root, "Scripts")
 
-        # install_cmd = ${CMAKE_COMMAND} -E copy_directory ${stagingpath} ${CMAKE_INSTALL_PREFIX} )
-        try:
-            os.makedirs(destpath)
-            os.makedirs(destbinpath)
-        except:
-            pass
+        make_dirs(destpath)
+        make_dirs(destbinpath)
 
+        cmd = ["pip", "install", "--no-deps", "--verbose",  "--target", destpath, "--install-option=--install-scripts=%s" % destbinpath, archive]
+        _log("variant: %s" % variant)
+        _log("root: %s" % root)
+        _log("cmd: %s" % cmd)
+        _log("destpath: %s" % destpath)
+        _log("destbinpath: %s" % destbinpath)
 
-
-        cmd = ["pip", "install",  "--no-deps",  "--target", destpath, "--install-option=--install-scripts==%s" % destbinpath, archive]
-        print "root: ", root
-        print "cmd: ", cmd
-        print "destpath: ", destpath
-        print "destbinpath: ", destbinpath
-        # COMMAND pip install --no-deps --target {destpath} --install-option=--install-scripts=${destbinpath} .
         _cmd(context=context, command=cmd, quiet=(not _verbose))
-        # shutil.copytree(rez_path, os.path.join(root, "rez"))
-        # shutil.copytree(rezplugins_path, os.path.join(root, "rezplugins"))
 
     with make_package(pkg_name, install_path, make_root=make_root) as pkg:
         pkg.version = pkg_version
+        # TODO:
         # pkg.tools = ["find executable in bin_folder"]
         pkg.requires = py_reqs
         pkg.commands = commands
-        # pkg.variants = variants
+        pkg.variants = [system.variant]
     
-    print archive, pip_req, py_reqs, mode
+    return pkg_str
 
 
 
@@ -213,7 +224,13 @@ def _download_packages(source_name, context, tmpdir, no_deps):
     os.mkdir(archives_path)
     os.mkdir(cache_path)
 
-    cmd_base = ["pip", "install", "--cache-dir=%s" % cache_path]
+
+    cmd_base = ["pip", "install"] 
+    if platform_.name == "windows":
+        # wheel won't install scripts/binaries under windows???
+        # 
+        cmd_base += ["--no-use-wheel"]
+    cmd_base += ["--cache-dir=%s" % cache_path]
 
     # download archives
     cmd = cmd_base + ["--download=%s" % archives_path]
@@ -286,7 +303,7 @@ def _cmd(context, command, quiet=False):
                          % (cmd_str, err))
 
 
-_verbose = True#config.debug("package_release")
+_verbose = config.debug("package_release")
 
 
 def _log(msg):

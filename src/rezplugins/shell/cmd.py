@@ -27,7 +27,6 @@ class CMD(Shell):
 
     @property
     def env_var_separators(self):
-        priont
         return {"PATH":";"}
 
     @classmethod
